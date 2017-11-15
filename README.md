@@ -1,3 +1,3 @@
 # CMSC170-MP2
 
-## K-MEANS COMPRESSION
+## K-means Compression
