@@ -1,5 +1,8 @@
 import random
 import math
+import copy
+import os
+
 from PIL import Image
 
 def extract_values_file(filename=None):
@@ -15,7 +18,6 @@ def extract_values_file(filename=None):
                 if c != '':
                     row.append(float(c))
             values.append(row)
-
 
         return values
 
@@ -33,19 +35,20 @@ def extract_values_image(filename=None):
             value_row = []
             for col in xrange(0, dim[1]):
                 value_row.append(list(pix[row, col]))
-            values.append(value_row)
+            values += value_row
         return values
 
-def modify_rgba(source=None, output=None, values=[]):
+def modify_rgba(source=None, target=None, values=[]):
+    cwd = os.getcwd()
     if source:
-        im = Image.open(source)
+        value = iter(values)
+        im = Image.new("RGB", (128, 128))
         pix = im.load()
+        for x in range(128):
+            for y in range(128):
+                pix[x,y] = tuple(next(value))
 
-        for ridx, row_val in enumerate(values):
-            for cidx, col_val in enumerate(values[ridx]):
-                pix[ridx, cidx] = tuple(values[ridx][cidx])
-
-        im.save(output)
+        im.save(target, "PNG")
 
 def get_assignments(values, centroids):
     assignments = []
@@ -58,45 +61,50 @@ def get_assignments(values, centroids):
             distances.append(distance)
 
         min_distance = min(distances)
-        assignments.append([math.ceil(min_distance*1000000)/1000000, distances.index(min_distance)])
-        #assignments.append(centroids[get_min_centroid(a, b, c)]);
+        assignments.append([min_distance, distances.index(min_distance)])
     return assignments
 
 def get_distance(pair, centroid):
-    return math.sqrt((pair[0] - centroid[0])**(2) + (pair[1] - centroid[1])**(2))
-
-def get_min_centroid(a, b ,c):
-    min = a
-    index = 0
-    if min > b:
-        min = b
-        index = 1
-    if min > c:
-        min = c
-        index = 2
-    return index
+    distance = 0;
+    for index, feature in enumerate(centroid):
+        distance += (pair[index] - centroid[index])**(2)
+    return math.sqrt(distance)
 
 def get_new_centroids(values, assignments, length):
     new_centroids = []
     mu_sizes = []
+    feature_length = len(values[0])
+    temp_centroid = []
+    for i in xrange(0, feature_length):
+        temp_centroid.append(0)
+
     while length > 0:
-        new_centroids.append([0, 0])
+        new_centroids.append(copy.deepcopy(temp_centroid))
         mu_sizes.append(0)
         length -= 1;
 
     for index, pair in enumerate(values):
         i = assignments[index][1]
-        new_centroids[i] = [(new_centroids[i][0] + values[index][0]), (new_centroids[i][1] + values[index][1])]
+        temp_centroid = []
+        for j in xrange(0, feature_length):
+            temp_centroid.append(new_centroids[i][j] + values[index][j])
+
+        new_centroids[i] = copy.deepcopy(temp_centroid)
         mu_sizes[i] += 1
 
     for index, pair in enumerate(new_centroids):
-        new_centroids[index][0] /= mu_sizes[index]
-        new_centroids[index][1] /= mu_sizes[index]
+        for j in xrange(0, feature_length):
+            new_centroids[index][j] /= mu_sizes[index]
 
-        new_centroids[index][0] = math.ceil(new_centroids[index][0]*1000000)/1000000
-        new_centroids[index][1] = math.ceil(new_centroids[index][1]*1000000)/1000000
-    return new_centroids  
+    return new_centroids
 
 def get_cost_j(assignments, m):
     cost_j = (sum(x[0] for x in assignments))/m
     return cost_j
+
+def get_compressed_values(assignments, centroids):
+    assignments = [x[1] for x in assignments]
+    compressed_values = []
+    for index in assignments:
+        compressed_values.append(centroids[index])
+    return compressed_values

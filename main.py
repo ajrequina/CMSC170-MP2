@@ -1,27 +1,46 @@
-from utils import extract_values_file, extract_values_image, get_sample, modify_rgba, get_assignments, get_new_centroids, get_cost_j
+import itertools
+
+from utils import extract_values_file, extract_values_image, get_sample, modify_rgba, get_assignments, get_new_centroids, get_cost_j, get_compressed_values
 
 class Main(object):
 	def __init__(self):
 		super(Main, self).__init__()
-		
+		self.values = []
+		self.assignments = []
+		self.centroids = []
+		self.is_file = False
+
+	def compress_image(self, values):
+		self.is_file = False
+		centroids = get_sample(values=values_from_image, num=16)
+		self.solve_k_means(values, centroids)
+		self.write_new_image(self.assignments, self.centroids)
+
+	def evaluate_file(self, values):
+		self.is_file = True
+		centroids = [
+		    [3, 3],
+		    [6, 2],
+		    [8, 5]
+		]
+		self.solve_k_means(values, centroids)
+	
 	def solve_k_means(self, values, centroids):
 		J = 0
 		for iter in xrange(1,11):
 			assignments = get_assignments(values, centroids)
 
 			centroids = get_new_centroids(values, assignments, len(centroids))
-			# print("\n")
-			# print(new_centroids)
 
 			new_j = get_cost_j(assignments, len(values))
-			# print("\n")
-			# print new_j
 
 			dJ = J - new_j
-			self.write_new_assignments(assignments, iter)
-			self.write_new_centroids(centroids, new_j, dJ, iter)
+			if self.is_file:
+				self.write_new_assignments(assignments, iter)
+				self.write_new_centroids(centroids, new_j, dJ, iter)
 			J = new_j
-		print("First part accomplished!")
+			self.assignments = assignments
+			self.centroids = centroids
 
 	def write_new_assignments(self, assignments, iter):
 	    file_name = "iter" + str(iter) + "_ca.txt"
@@ -39,28 +58,13 @@ class Main(object):
 		file.write("dJ= " + str(dJ) + "\n")
 		file.close()
 
+	def write_new_image(self, assignments, centroids):
+		compressed_values = get_compressed_values(assignments, centroids)
+		modify_rgba(source="kmimg1.png", target="kmimg2.png", values=compressed_values)
+
 values_from_file = extract_values_file(filename="kmdata1.txt")
-file_centroids = [
-    [3, 3],
-    [6, 2],
-    [8, 5]
-]
-
 values_from_image = extract_values_image(filename="kmimg1.png")
-image_centroids = get_sample(values=values_from_image, num=16)
-
-for values in image_centroids:
-	print len(values)
-	print "\n"
-print(len(image_centroids))
-# print(values_from_image)
-# print("\n\n\n\n\n\n")
-# print(image_centroids)
 
 main = Main()
-main.solve_k_means(values_from_file, file_centroids)
-
-# new_values = 
-# modify_rgba(source="kmimg1.png", target="kmimg2.png", values=new_values)
-
-
+main.evaluate_file(values_from_file)
+main.compress_image(values_from_image)
