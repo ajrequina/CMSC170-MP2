@@ -24,7 +24,7 @@ class Main(object):
 		    [8, 5]
 		]
 		self.solve_k_means(values, centroids)
-	
+
 	def solve_k_means(self, values, centroids):
 		J = 0
 		for iter in xrange(1,11):
@@ -61,6 +61,7 @@ class Main(object):
 	def write_new_image(self, assignments, centroids):
 		compressed_values = get_compressed_values(assignments, centroids)
 		modify_rgba(source="kmimg1.png", target="kmimg2.png", values=compressed_values)
+
 
 values_from_file = extract_values_file(filename="kmdata1.txt")
 values_from_image = extract_values_image(filename="kmimg1.png")
