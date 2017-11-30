@@ -1,4 +1,6 @@
 import itertools
+import time
+
 
 from utils import extract_values_file, extract_values_image, get_sample, modify_rgba, get_assignments, get_new_centroids, get_cost_j, get_compressed_values
 
@@ -62,10 +64,17 @@ class Main(object):
 		compressed_values = get_compressed_values(assignments, centroids)
 		modify_rgba(source="kmimg1.png", target="kmimg2.png", values=compressed_values)
 
-
 values_from_file = extract_values_file(filename="kmdata1.txt")
 values_from_image = extract_values_image(filename="kmimg1.png")
 
 main = Main()
+start = int(round(time.time() * 1000))
+print("---- Part 1 Processing ----")
 main.evaluate_file(values_from_file)
+end = int(round(time.time() * 1000))
+print("---- Part 1 Finished (" + str(end - start) + " ms) ----\n")
+start = int(round(time.time() * 1000))
+print("---- Part 2 Processing ----")
 main.compress_image(values_from_image)
+end = int(round(time.time() * 1000))
+print("---- Part 2 Finished (" + str(end - start) + " ms) ----\n")
